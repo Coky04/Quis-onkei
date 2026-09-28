@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Pintar (Sederhana & Interaktif)</title>
+    <!-- Tailwind CSS untuk Desain -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <div class="max-w-3xl mx-auto p-4 sm:p-6 min-h-screen flex flex-col justify-between">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm rounded-2xl p-6 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-600">Kuis Pintar</h1>
+                <p class="text-sm text-slate-500">Evaluasi & Pembahasan Interaktif</p>
+            </div>
+            <div id="nav-buttons" class="space-x-2">
+                <button onclick="switchTab('quiz')" class="px-4 py-2 bg-indigo-50 text-indigo-600 font-medium rounded-xl hover:bg-indigo-100 transition">Mode Kuis</button>
+                <button onclick="switchTab('admin')" class="px-4 py-2 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200 transition">Kelola Soal</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow">
+
+            <!-- TAB 1: MODE KUIS -->
+            <section id="tab-quiz" class="space-y-6">
+                <!-- Halaman Mulai & Pengaturan Mode -->
+                <div id="quiz-start" class="bg-white p-8 rounded-2xl shadow-sm text-center space-y-6">
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">Selamat Datang di Kuis Interaktif</h2>
+                        <p class="text-slate-600">Kerjakan soal dengan teliti. Di akhir, Anda bisa melihat analisis kesalahan beserta penjelasannya.</p>
+                    </div>
+
+                    <!-- INPUT NAMA SISWA -->
+                    <div class="max-w-md mx-auto bg-slate-50 p-4 rounded-xl border border-slate-200 text-left space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Siswa / Peserta:</label>
+                            <input type="text" id="student-name" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Masukkan nama lengkap Anda..." required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pengaturan Tampilan Evaluasi:</label>
+                            <select id="eval-mode" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="show">Perlihatkan Jawaban & Penjelasan Langsung (Tiap Soal)</option>
+                                <option value="hide">Sembunyikan Jawaban (Evaluasi Hanya di Hasil Akhir)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="startQuiz()" class="px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl shadow-md hover:bg-indigo-700 transition">Mulai Kuis</button>
+                </div>
+
+                <!-- Halaman Pengerjaan -->
+                <div id="quiz-box" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hidden space-y-6">
+                    <div class="flex justify-between items-center text-sm text-slate-500 border-b pb-4">
+                        <span id="question-counter">Soal 1 dari 3</span>
+                        <span id="score-live" class="font-semibold text-indigo-600">Skor: 0</span>
+                    </div>
+
+                    <!-- Pertanyaan & Audio -->
+                    <div class="space-y-3">
+                        <h3 id="question-text" class="text-lg font-medium text-slate-900">Pertanyaan akan muncul di sini...</h3>
+                        <!-- Container untuk soal suara -->
+                        <div id="audio-container" class="hidden">
+                            <button id="play-audio-btn" onclick="playQuestionAudio()" class="inline-flex items-center space-x-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl hover:bg-amber-100 transition text-sm font-medium">
+                                <span>🔊 Putar Audio Soal</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Opsi Jawaban -->
+                    <div id="options-container" class="space-y-3">
+                        <!-- Opsi dibentuk via JS -->
+                    </div>
+
+                    <!-- Kotak Umpan Balik Instan -->
+                    <div id="instant-feedback" class="hidden p-4 rounded-xl border text-sm space-y-1">
+                        <!-- Diisi via JS -->
+                    </div>
+
+                    <!-- Tombol Lanjut -->
+                    <div id="next-container" class="hidden pt-4 flex justify-end">
+                        <button onclick="nextQuestion()" class="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition">Lanjut</button>
+                    </div>
+                </div>
+
+                <!-- Halaman Hasil & Laporan -->
+                <div id="quiz-result" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hidden space-y-6">
+                    <div class="text-center space-y-2">
+                        <h2 class="text-2xl font-bold text-slate-900">Hasil Kuis Anda</h2>
+                        <p class="text-sm text-slate-500">Nama: <strong id="result-name" class="text-slate-700"></strong></p>
+                        <div id="final-score" class="text-4xl font-extrabold text-indigo-600">80</div>
+                        <p id="final-message" class="text-slate-600">Kerja bagus!</p>
+                    </div>
+
+                    <!-- Detail Analisis Jawaban & Rujukan -->
+                    <div class="space-y-4 pt-4 border-t">
+                        <h3 class="font-semibold text-slate-800">Analisis & Penjelasan Kesalahan:</h3>
+                        <div id="review-container" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                            <!-- Review per soal -->
+                        </div>
+                    </div>
+
+                    <!-- Aksi Tombol (Download Excel, Bagikan, Ulangi) -->
+                    <div class="pt-4 border-t grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button onclick="downloadExcel()" class="py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition flex items-center justify-center space-x-2">
+                            <span>📥 Unduh Excel</span>
+                        </button>
+                        <button onclick="shareReport()" class="py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition flex items-center justify-center space-x-2">
+                            <span>📤 Salin Laporan</span>
+                        </button>
+                        <button onclick="resetQuiz()" class="py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition">Ulangi Kuis</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: KELOLA SOAL (ADMIN / GURU) -->
+            <section id="tab-admin" class="space-y-6 hidden">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
+                    <div class="flex justify-between items-center border-b pb-4">
+                        <h2 class="text-xl font-bold text-slate-900">Daftar Soal Kuis</h2>
+                        <button onclick="openAddModal()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition">+ Tambah Soal</button>
+                    </div>
+
+                    <!-- Tabel Daftar Soal -->
+                    <div id="admin-question-list" class="space-y-4">
+                        <!-- List soal via JS -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Modal Tambah/Edit Soal -->
+        <div id="question-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] overflow-y-auto">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-900">Tambah Soal Baru</h3>
+                <form id="question-form" onsubmit="saveQuestion(event)" class="space-y-4">
+                    <input type="hidden" id="edit-index" value="-1">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Pertanyaan Teks</label>
+                        <textarea id="input-question" rows="2" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Tulis teks pertanyaan..." required></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">URL Audio (Opsional untuk Soal Suara)</label>
+                        <input type="text" id="input-audio" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Contoh: https://link-audio.com/suara.mp3">
+                        <span class="text-xs text-slate-400">Kosongkan jika tidak menggunakan suara.</span>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-slate-700">Pilihan Jawaban (Pilih salah satu yang benar)</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correct-option" value="0" checked class="accent-indigo-600">
+                                <input type="text" class="option-input w-full p-2 border rounded-lg text-sm" placeholder="Pilihan A" required>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correct-option" value="1" class="accent-indigo-600">
+                                <input type="text" class="option-input w-full p-2 border rounded-lg text-sm" placeholder="Pilihan B" required>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correct-option" value="2" class="accent-indigo-600">
+                                <input type="text" class="option-input w-full p-2 border rounded-lg text-sm" placeholder="Pilihan C" required>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="radio" name="correct-option" value="3" class="accent-indigo-600">
+                                <input type="text" class="option-input w-full p-2 border rounded-lg text-sm" placeholder="Pilihan D" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Rujukan / Penjelasan Mengapa Benar/Salah</label>
+                        <textarea id="input-explanation" rows="2" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Jelaskan konsep dasar atau rujukannya..." required></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-slate-400 py-6">
+            Aplikasi Kuis Interaktif Sederhana &copy; 2026
+        </footer>
+    </div>
+
+    <!-- Script Logika Aplikasi -->
+    <script>
+        let questions = [
+            {
+                question: "Berapakah hasil dari 15 + 15 * 2?",
+                audio: "",
+                options: ["45", "60", "30", "75"],
+                answer: 0,
+                explanation: "Berdasarkan aturan operasi hitung campuran (kabataku), perkalian dikerjakan terlebih dahulu: 15 * 2 = 30. Kemudian penjumlahan: 15 + 30 = 45."
+            },
+            {
+                question: "Ibu kota negara Indonesia saat ini adalah...",
+                audio: "",
+                options: ["Surabaya", "Jakarta", "Bandung", "Medan"],
+                answer: 1,
+                explanation: "Jakarta saat ini masih menjadi pusat administrasi dan ibu kota secara hukum hingga pemindahan penuh ditetapkan resmi."
+            },
+            {
+                question: "Dengarkan suara instrumen/soal ini, apa instrumen yang dimainkan?",
+                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                options: ["Gitar", "Piano", "Sintetis Musik", "Flute"],
+                answer: 2,
+                explanation: "Audio tersebut adalah cuplikan musik digital sintetik (SoundHelix contoh sampel audio publik)."
+            }
+        ];
+
+        let currentStudentName = "";
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let evaluationMode = "show";
+
+        function switchTab(tabName) {
+            const quizTab = document.getElementById('tab-quiz');
+            const adminTab = document.getElementById('tab-admin');
+            
+            if(tabName === 'quiz') {
+                quizTab.classList.remove('hidden');
+                adminTab.classList.add('hidden');
+                resetQuiz();
+            } else {
+                quizTab.classList.add('hidden');
+                adminTab.classList.remove('hidden');
+                renderAdminQuestions();
+            }
+        }
+
+        function startQuiz() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if(!nameInput) {
+                alert("Silakan masukkan nama siswa terlebih dahulu sebelum memulai kuis!");
+                return;
+            }
+            if(questions.length === 0) {
+                alert("Belum ada soal! Tambahkan soal terlebih dahulu di menu Kelola Soal.");
+                return;
+            }
+
+            currentStudentName = nameInput;
+            evaluationMode = document.getElementById('eval-mode').value;
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+
+            document.getElementById('quiz-start').classList.add('hidden');
+            document.getElementById('quiz-box').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question-counter').innerText = `Soal ${currentQuestionIndex + 1} dari ${questions.length}`;
+            document.getElementById('score-live').innerText = `Skor: ${score}`;
+            document.getElementById('question-text').innerText = q.question;
+
+            const audioContainer = document.getElementById('audio-container');
+            if(q.audio && q.audio.trim() !== "") {
+                audioContainer.classList.remove('hidden');
+            } else {
+                audioContainer.classList.add('hidden');
+            }
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                optionsContainer.innerHTML += `
+                    <button onclick="selectOption(${idx})" class="option-btn w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition font-medium text-slate-700">
+                        ${String.fromCharCode(65 + idx)}. ${opt}
+                    </button>
+                `;
+            });
+
+            document.getElementById('instant-feedback').classList.add('hidden');
+            document.getElementById('next-container').classList.add('hidden');
+        }
+
+        function playQuestionAudio() {
+            const q = questions[currentQuestionIndex];
+            if(q.audio) {
+                const sound = new Audio(q.audio);
+                sound.play().catch(e => alert("Gagal memutar audio. Pastikan link audio valid."));
+            }
+        }
+
+        function selectOption(selectedIndex) {
+            const q = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === q.answer;
+            
+            userAnswers.push({
+                question: q.question,
+                selected: q.options[selectedIndex],
+                correct: q.options[q.answer],
+                isCorrect: isCorrect,
+                explanation: q.explanation
+            });
+
+            if(isCorrect) {
+                score += Math.round(100 / questions.length);
+            }
+
+            const buttons = document.querySelectorAll('.option-btn');
+
+            if (evaluationMode === "show") {
+                buttons.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if(idx === q.answer) {
+                        btn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-800');
+                    } else if(idx === selectedIndex && !isCorrect) {
+                        btn.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-800');
+                    }
+                });
+
+                const feedbackBox = document.getElementById('instant-feedback');
+                feedbackBox.classList.remove('hidden');
+                if(isCorrect) {
+                    feedbackBox.className = "p-4 rounded-xl border text-sm space-y-1 bg-emerald-50 border-emerald-200 text-emerald-900";
+                    feedbackBox.innerHTML = `<strong>✅ Benar!</strong><p class="text-xs mt-1"><strong>Rujukan / Penjelasan:</strong> ${q.explanation}</p>`;
+                } else {
+                    feedbackBox.className = "p-4 rounded-xl border text-sm space-y-1 bg-rose-50 border-rose-200 text-rose-900";
+                    feedbackBox.innerHTML = `<strong>❌ Salah.</strong> Jawaban yang benar adalah: <strong>${q.options[q.answer]}</strong><p class="text-xs mt-1"><strong>Rujukan / Penjelasan:</strong> ${q.explanation}</p>`;
+                }
+                document.getElementById('next-container').classList.remove('hidden');
+            } else {
+                buttons.forEach((btn) => btn.disabled = true);
+                document.getElementById('next-container').classList.remove('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if(currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-box').classList.add('hidden');
+            document.getElementById('quiz-result').classList.remove('hidden');
+            document.getElementById('result-name').innerText = currentStudentName;
+            document.getElementById('final-score').innerText = score;
+
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = '';
+
+            userAnswers.forEach((item, index) => {
+                const statusBadge = item.isCorrect 
+                    ? `<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md font-semibold">Benar</span>`
+                    : `<span class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-md font-semibold">Salah</span>`;
+                
+                reviewContainer.innerHTML += `
+                    <div class="p-4 rounded-xl border border-slate-100 bg-slate-50 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-bold text-slate-500">Soal ${index + 1}</span>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-sm font-medium text-slate-800">${item.question}</p>
+                        <div class="text-xs text-slate-600 space-y-1">
+                            <p>Jawaban Anda: <strong class="${item.isCorrect ? 'text-emerald-600':'text-rose-600'}">${item.selected}</strong></p>
+                            ${!item.isCorrect ? `<p>Jawaban yang benar: <strong class="text-emerald-600">${item.correct}</strong></p>` : ''}
+                        </div>
+                        <div class="mt-2 p-3 bg-white rounded-lg border border-indigo-50 text-xs text-slate-600">
+                            <strong>Rujukan / Penjelasan:</strong> ${item.explanation}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Fitur Download Laporan Excel (Format CSV kompatibel Excel)
+        function downloadExcel() {
+            let csvContent = "\uFEFF"; // BOM agar karakter UTF-8 / Emoji aman di Excel
+            csvContent += "Nama Siswa,Skor Akhir,No Soal,Pertanyaan,Status,Jawaban Siswa,Kunci Jawaban,Penjelasan\n";
+
+            userAnswers.forEach((item, idx) => {
+                let rowData = [
+                    `"${currentStudentName}"`,
+                    `"${score}"`,
+                    `"${idx + 1}"`,
+                    `"${item.question.replace(/"/g, '""')}"`,
+                    `"${item.isCorrect ? 'Benar' : 'Salah'}"`,
+                    `"${item.selected.replace(/"/g, '""')}"`,
+                    `"${item.correct.replace(/"/g, '""')}"`,
+                    `"${item.explanation.replace(/"/g, '""')}"`
+                ];
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Kuis_${currentStudentName.replace(/\s+/g, '_')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function resetQuiz() {
+            document.getElementById('student-name').value = "";
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-box').classList.add('hidden');
+            document.getElementById('quiz-start').classList.remove('hidden');
+        }
+
+        function shareReport() {
+            let reportText = `📋 *LAPORAN HASIL KUIS SISWA*\n`;
+            reportText += `Nama: ${currentStudentName}\n`;
+            reportText += `Skor Akhir: ${score} / 100\n\n`;
+            
+            userAnswers.forEach((item, idx) => {
+                reportText += `Soal ${idx+1}: ${item.question}\n`;
+                reportText += `Status: ${item.isCorrect ? '✅ Benar' : '❌ Salah'}\n`;
+                if(!item.isCorrect) {
+                    reportText += `Jawabannya: ${item.selected} (Seharusnya: ${item.correct})\n`;
+                    reportText += `💡 Penjelasan: ${item.explanation}\n`;
+                }
+                reportText += `-------------------\n`;
+            });
+
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert("Laporan berhasil disalin ke clipboard! Anda bisa langsung menempelkannya (paste) ke WhatsApp.");
+            }).catch(err => {
+                alert("Gagal menyalin laporan.");
+            });
+        }
+
+        function renderAdminQuestions() {
+            const listEl = document.getElementById('admin-question-list');
+            listEl.innerHTML = '';
+
+            if(questions.length === 0) {
+                listEl.innerHTML = `<p class="text-slate-400 text-sm italic">Belum ada soal tersimpan.</p>`;
+                return;
+            }
+
+            questions.forEach((q, idx) => {
+                listEl.innerHTML += `
+                    <div class="p-4 border border-slate-200 rounded-xl space-y-2 bg-slate-50/50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-indigo-600">Soal #${idx + 1}</span>
+                            <div class="space-x-2">
+                                <button onclick="editQuestion(${idx})" class="text-xs text-amber-600 font-medium hover:underline">Edit</button>
+                                <button onclick="deleteQuestion(${idx})" class="text-xs text-rose-600 font-medium hover:underline">Hapus</button>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-slate-800">${q.question}</p>
+                        <div class="text-xs text-slate-500">
+                            Opsi: ${q.options.join(' | ')} | <span class="text-emerald-600 font-semibold">Benar: Pilihan ${String.fromCharCode(65 + q.answer)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "Tambah Soal Baru";
+            document.getElementById('edit-index').value = -1;
+            document.getElementById('question-form').reset();
+            document.getElementById('question-modal').classList.remove('hidden');
+        }
+
+        function editQuestion(index) {
+            const q = questions[index];
+            document.getElementById('modal-title').innerText = "Edit Soal";
+            document.getElementById('edit-index').value = index;
+            document.getElementById('input-question').value = q.question;
+            document.getElementById('input-audio').value = q.audio || "";
+            document.getElementById('input-explanation').value = q.explanation;
+
+            const optionInputs = document.querySelectorAll('.option-input');
+            const radioInputs = document.querySelectorAll('input[name="correct-option"]');
+
+            q.options.forEach((opt, i) => {
+                optionInputs[i].value = opt;
+            });
+            radioInputs[q.answer].checked = true;
+
+            document.getElementById('question-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('question-modal').classList.add('hidden');
+        }
+
+        function saveQuestion(event) {
+            event.preventDefault();
+            const index = parseInt(document.getElementById('edit-index').value);
+            const questionText = document.getElementById('input-question').value;
+            const audioUrl = document.getElementById('input-audio').value;
+            const explanationText = document.getElementById('input-explanation').value;
+            
+            const optionInputs = document.querySelectorAll('.option-input');
+            const radioInputs = document.querySelectorAll('input[name="correct-option"]');
+
+            let options = [];
+            let correctIndex = 0;
+
+            optionInputs.forEach((input, i) => {
+                options.push(input.value);
+                if(radioInputs[i].checked) {
+                    correctIndex = i;
+                }
+            });
+
+            const newQuestionData = {
+                question: questionText,
+                audio: audioUrl,
+                options: options,
+                answer: correctIndex,
+                explanation: explanationText
+            };
+
+            if(index === -1) {
+                questions.push(newQuestionData);
+            } else {
+                questions[index] = newQuestionData;
+            }
+
+            closeModal();
+            renderAdminQuestions();
+        }
+
+        function deleteQuestion(index) {
+            if(confirm("Apakah Anda yakin ingin menghapus soal ini?")) {
+                questions.splice(index, 1);
+                renderAdminQuestions();
+            }
+        }
+    </script>
+</body>
+</html>
